@@ -11,7 +11,7 @@
         <view class="nickname">
           {{ isLogin ? userInfo.name : '点击登录 / 注册' }}
         </view>
-        <view v-if="isLogin" class="desc">
+        <view v-if="isLogin" class="desc1">
           {{ userInfo.phone }}
         </view>
       </view>
@@ -156,7 +156,7 @@ onShow(() => {
   font-weight: 600;
 }
 
-.desc {
+.desc1 {
   margin-top: 8rpx;
   font-size: 24rpx;
   color: #999;
