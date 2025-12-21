@@ -80,7 +80,7 @@ const handleLogin = async () => {
   try {
     const data = await loginApi(params)
 
-    uni.setStorageSync('userinfo', data)
+    uni.setStorageSync('userinfo', data.data)
 
     uni.showToast({
       title: '登录成功',

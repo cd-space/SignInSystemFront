@@ -1,35 +1,30 @@
 <template>
   <view class="teacher-signin-page">
     <!-- 发布/结束签到 -->
-	<view class="action-card">
-		<view class="action-header">
-			<text class="action-title">课堂签到</text>
-			<text class="action-desc">
-				{{ isSigninActive ? '当前签到进行中' : '请选择班级并发布签到' }}
-			</text>
-		</view>
+    <view class="action-card">
+      <view class="action-header">
+        <text class="action-title">课堂签到</text>
+        <text class="action-desc">
+          {{ isSigninActive ? '当前签到进行中' : '请选择班级并发布签到' }}
+        </text>
+      </view>
 
-		<button class="action-btn" @click="toggleSignin">
-			{{ isSigninActive ? '结束签到' : '发布签到' }}
-		</button>
-	</view>
+      <button class="action-btn" @click="toggleSignin">
+        {{ isSigninActive ? '结束签到' : '发布签到' }}
+      </button>
+    </view>
 
-	<!-- 班级选择 -->
-	<view v-if="!isSigninActive" class="class-card">
-		<view class="card-title">选择签到班级</view>
+    <!-- 班级选择 -->
+    <view v-if="!isSigninActive" class="class-card">
+      <view class="card-title">选择签到班级</view>
 
-		<view class="class-grid">
-			<view
-				v-for="cls in classes"
-				:key="cls.id"
-				class="class-box"
-				:class="{ active: selectedClasses.includes(cls.id) }"
-				@click="toggleClass(cls.id)"
-			>
-				{{ cls.name }}
-			</view>
-		</view>
-	</view>
+      <view class="class-grid">
+        <view v-for="cls in classes" :key="cls.id" class="class-box"
+          :class="{ active: selectedClasses.includes(cls.id) }" @click="toggleClass(cls.id)">
+          {{ cls.name }}
+        </view>
+      </view>
+    </view>
 
     <!-- 上传签到图片 -->
     <view v-if="isSigninActive" class="upload-section">
@@ -47,14 +42,14 @@
     <view v-if="isSigninActive" class="results-section">
       <view class="title">学生签到结果</view>
       <view class="result-list">
-		<view class="result-item" v-for="(student, index) in students" :key="student.id">
-		  <text>{{ student.name }}</text>
-		  <picker :value="student.statusIndex" :range="statusOptions" @change="updateStatus(index, $event)">
-			<text :style="{ color: statusColors[student.statusIndex] }">
-			  {{ statusOptions[student.statusIndex] }}
-			</text>
-		  </picker>
-		</view>
+        <view class="result-item" v-for="(student, index) in students" :key="student.id">
+          <text>{{ student.name }}</text>
+          <picker :value="student.statusIndex" :range="statusOptions" @change="updateStatus(index, $event)">
+            <text :style="{ color: statusColors[student.statusIndex] }">
+              {{ statusOptions[student.statusIndex] }}
+            </text>
+          </picker>
+        </view>
       </view>
     </view>
   </view>
@@ -64,7 +59,7 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 // import { uniChooseImage } from '@dcloudio/uni-app'
-import { seacherclassApi, publishSignIgApi, queryTeacherSign,querySignTaskStudents } from '@/api/teacher.js'
+import { seacherclassApi, publishSignIgApi, queryTeacherSignApi, querySignTaskStudentsApi, closeSignTaskApi,updateSignStatusApi } from '@/api/teacher.js'
 
 const cacheUser = uni.getStorageSync('userinfo')
 
@@ -77,17 +72,13 @@ const selectedClasses = ref([])
 // 签到任务的id
 const taskId = ref(null)
 
- 
+
 
 /* 上传图片 */
 const images = ref([])
 
 /* 学生签到结果 */
-const students = ref([
-  { id: 1, name: '张三', statusIndex: 0 },
-  { id: 2, name: '李四', statusIndex: 0 },
-  { id: 3, name: '王五', statusIndex: 0 }
-])
+const students = ref([])
 const statusOptions = ['未签到', '已签到', '请假', '迟到']
 const statusColors = ['#ff3b30', '#4cd964', '#007aff', '#ff3b30'] // 未签到/迟到红色, 已签到绿色, 请假蓝色
 
@@ -114,33 +105,66 @@ const removeImage = (index) => {
 }
 
 /* 发布/结束签到 */
-const toggleSignin = async() => {
+const toggleSignin = async () => {
   if (!isSigninActive.value && selectedClasses.value.length === 0) {
     uni.showToast({ title: '请先选择班级', icon: 'none' })
     return
   }
   isSigninActive.value = !isSigninActive.value
   if (!isSigninActive.value) {
+    try {
+      await closeSignTaskApi({
+        "sign_task_id": taskId.value
+      })
+    } catch (err) {
+      uni.showToast({ title: '结束签到失败', icon: 'none' })
+      return
+    }
+
     // 结束签到，可在这里处理保存数据逻辑
     uni.showToast({ title: '签到结束', icon: 'success' })
     images.value = []
+    taskId.value = null
+    students.value = []
     // students.value 可以清空或保留
   } else {
-	try{
-		await publishSignIgApi({
-			"classlist":selectedClasses.value,
-			"initiator":cacheUser.id
-		})
-		uni.showToast({ title: '签到已发布', icon: 'success' })
-	}catch(err){
-		uni.showToast({ title: '签到发布失败', icon: 'none' })
-	}
+    try {
+      const data = await publishSignIgApi({
+        "classlist": selectedClasses.value,
+        "initiator": cacheUser.id
+      })
+      taskId.value = data.sign_task_id
+      uni.showToast({ title: '签到已发布', icon: 'success' })
+      const studentsRes = await querySignTaskStudentsApi({
+        "sign_task_id": taskId.value
+      })
+      if (studentsRes && studentsRes.code === 200) {
+        students.value = studentsRes.data.map(student => ({
+          id: student.user_id,
+          name: student.name,
+          statusIndex: student.sign_status 
+        }))
+        sortStudents()
+      }
+    } catch (err) {
+      uni.showToast({ title: '签到发布失败', icon: 'none' })
+    }
   }
 }
 
 /* 修改学生签到状态 */
-const updateStatus = (index, event) => {
+const updateStatus = async(index, event) => {
+  try {
+    await updateSignStatusApi({
+      "sign_task_id": taskId.value,
+      "student_id": students.value[index].id,
+      "new_status": event.detail.value
+    })
   students.value[index].statusIndex = event.detail.value
+  } catch (err) {
+    uni.showToast({ title: '更新签到状态失败', icon: 'none' })
+    return
+  }
   sortStudents()
 }
 
@@ -156,37 +180,48 @@ const sortStudents = () => {
   })
 }
 onShow(async () => {
-	try{
-      const signTaskRes = await queryTeacherSign({
-        "initiator":cacheUser.id
+  try {
+    const signTaskRes = await queryTeacherSignApi({
+      "initiator": cacheUser.id
+    })
+    if (signTaskRes && signTaskRes.code === 200 && signTaskRes.message !== '没有进行中的签到') {
+      isSigninActive.value = true
+      taskId.value = signTaskRes.sign_task_id
+    } else {
+      isSigninActive.value = false
+      taskId.value = null
+    }
+    const res = await seacherclassApi()
+    if (res) {
+      classes.value = res.data.classes || []
+    } else {
+      classes.value = []
+      uni.showToast({
+        title: res.msg || '获取班级失败',
+        icon: 'none'
       })
-      console.log('signTaskRes',signTaskRes)
-      if (signTaskRes && signTaskRes.code === 200) {
-        isSigninActive.value = true
-        taskId.value = signTaskRes.sign_task_id
-        return
-      } else {
-        isSigninActive.value = false
-        taskId.value = null
+    }
+    if (isSigninActive.value) {
+      const studentsRes = await querySignTaskStudentsApi({
+        "sign_task_id": taskId.value
+      })
+      if (studentsRes && studentsRes.code === 200) {
+        students.value = studentsRes.data.map(student => ({
+          id: student.user_id,
+          name: student.name,
+          statusIndex: student.sign_status // 假设后端返回的status与前端一致
+        }))
+        sortStudents()
       }
-		 const res = await seacherclassApi()
-		 if (res) {
-		   classes.value = res.data.classes || []
-		 } else {
-		   classes.value = []
-		   uni.showToast({
-		     title: res.msg || '获取班级失败',
-		     icon: 'none'
-		   })
-		 }
-		
-	}catch(err){
-		classes.value = []
-		uni.showToast({
-		  title: res.msg || '获取班级失败',
-		  icon: 'none'
-		})
-	}
+    }
+
+  } catch (err) {
+    classes.value = []
+    uni.showToast({
+      title: res.msg || '获取班级失败',
+      icon: 'none'
+    })
+  }
 })
 
 </script>
@@ -221,11 +256,13 @@ onShow(async () => {
   flex-wrap: wrap;
   gap: 20rpx;
 }
+
 .class-item {
   padding: 15rpx 30rpx;
   background: #fff;
   border-radius: 16rpx;
 }
+
 .class-item.selected {
   background: #4cd964;
   color: #fff;
@@ -237,14 +274,17 @@ onShow(async () => {
   gap: 20rpx;
   align-items: center;
 }
+
 .upload-item {
   position: relative;
 }
+
 .upload-item .img {
   width: 150rpx;
   height: 150rpx;
   border-radius: 16rpx;
 }
+
 .upload-item .remove {
   position: absolute;
   top: -10rpx;
@@ -270,6 +310,7 @@ onShow(async () => {
 .result-list {
   margin-top: 20rpx;
 }
+
 .result-item {
   display: flex;
   justify-content: space-between;
@@ -283,78 +324,77 @@ onShow(async () => {
 
 /* 顶部操作卡片 */
 .action-card {
-	background: linear-gradient(135deg, #4a8cff, #6aa8ff);
-	border-radius: 28rpx;
-	padding: 40rpx;
-	color: #fff;
-	margin-bottom: 40rpx;
-	box-shadow: 0 20rpx 40rpx rgba(74, 140, 255, 0.35);
+  background: linear-gradient(135deg, #4a8cff, #6aa8ff);
+  border-radius: 28rpx;
+  padding: 40rpx;
+  color: #fff;
+  margin-bottom: 40rpx;
+  box-shadow: 0 20rpx 40rpx rgba(74, 140, 255, 0.35);
 }
 
 .action-header {
-	margin-bottom: 32rpx;
+  margin-bottom: 32rpx;
 }
 
 .action-title {
-	font-size: 36rpx;
-	font-weight: 600;
-	margin-bottom: 10rpx;
-	display: block;
+  font-size: 36rpx;
+  font-weight: 600;
+  margin-bottom: 10rpx;
+  display: block;
 }
 
 .action-desc {
-	font-size: 26rpx;
-	opacity: 0.9;
+  font-size: 26rpx;
+  opacity: 0.9;
 }
 
 .action-btn {
-	background: #fff;
-	color: #4a8cff;
-	font-size: 30rpx;
-	font-weight: 600;
-	border-radius: 999rpx;
-	padding: 22rpx 0;
-	box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.15);
+  background: #fff;
+  color: #4a8cff;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 999rpx;
+  padding: 22rpx 0;
+  box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.15);
 }
 
 /* 班级选择卡片 */
 .class-card {
-	background: #fff;
-	border-radius: 28rpx;
-	padding: 36rpx;
-	box-shadow: 0 14rpx 36rpx rgba(0, 0, 0, 0.06);
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 36rpx;
+  box-shadow: 0 14rpx 36rpx rgba(0, 0, 0, 0.06);
 }
 
 .card-title {
-	font-size: 30rpx;
-	font-weight: 600;
-	color: #222;
-	margin-bottom: 24rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 24rpx;
 }
 
 /* 班级网格 */
 .class-grid {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 24rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24rpx;
 }
 
 .class-box {
-	text-align: center;
-	padding: 24rpx 0;
-	border-radius: 20rpx;
-	background: #f3f5f9;
-	color: #333;
-	font-size: 28rpx;
-	transition: all 0.2s ease;
+  text-align: center;
+  padding: 24rpx 0;
+  border-radius: 20rpx;
+  background: #f3f5f9;
+  color: #333;
+  font-size: 28rpx;
+  transition: all 0.2s ease;
 }
 
 /* 选中态 */
 .class-box.active {
-	background: rgba(74, 140, 255, 0.15);
-	color: #4a8cff;
-	font-weight: 600;
-	box-shadow: inset 0 0 0 2rpx #4a8cff;
+  background: rgba(74, 140, 255, 0.15);
+  color: #4a8cff;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 2rpx #4a8cff;
 }
-
 </style>

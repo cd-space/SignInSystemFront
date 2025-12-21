@@ -59,30 +59,30 @@ const fetchSignRecords = () => {
 	return new Promise(resolve => {
 		setTimeout(() => {
 			// 👇 改成 [] 即可测试“暂无记录”
-			// resolve([
-			// 	{
-			// 		id: '1',
-			// 		publisher: '王老师',
-			// 		startTime: '2025-12-18 08:00',
-			// 		endTime: '2025-12-18 08:15',
-			// 		result: 'signed'
-			// 	},
-			// 	{
-			// 		id: '2',
-			// 		publisher: '李老师',
-			// 		startTime: '2025-12-17 14:00',
-			// 		endTime: '2025-12-17 14:10',
-			// 		result: 'late'
-			// 	},
-			// 	{
-			// 		id: '3',
-			// 		publisher: '张老师',
-			// 		startTime: '2025-12-16 10:00',
-			// 		endTime: '2025-12-16 10:10',
-			// 		result: 'absent'
-			// 	}
-			// ])
-			resolve([])
+			resolve([
+				{
+					id: '1',
+					publisher: '王老师',
+					startTime: '2025-12-18 08:00',
+					endTime: '2025-12-18 08:15',
+					result: 'signed'
+				},
+				{
+					id: '2',
+					publisher: '李老师',
+					startTime: '2025-12-17 14:00',
+					endTime: '2025-12-17 14:10',
+					result: 'late'
+				},
+				{
+					id: '3',
+					publisher: '张老师',
+					startTime: '2025-12-16 10:00',
+					endTime: '2025-12-16 10:10',
+					result: 'absent'
+				}
+			])
+			// resolve([])
 		}, 800)
 	})
 }
