@@ -7,3 +7,12 @@ export const quaryStudentSignApi = (data) => {
 		data
 	})
 }
+
+
+export const quaryStudentHistoryApi = (data) => {
+	return request({
+		url: '/api/query_student_history',
+		method: 'post',
+		data
+	})
+}
