@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "pages/signin/signin",
+    "pages/mine/mine",
+    "pages/login/login",
+    "pages/register/register"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "selectedColor": "#4cd964",
+    "list": [
+      {
+        "pagePath": "pages/signin/signin",
+        "text": "签到",
+        "iconPath": "/static/images/tabBar/signin.png",
+        "selectedIconPath": "/static/images/tabBar/signin-select.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "/static/images/tabBar/mine.png",
+        "selectedIconPath": "/static/images/tabBar/mine-select.png"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

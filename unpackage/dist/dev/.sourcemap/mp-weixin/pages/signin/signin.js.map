@@ -1,0 +1,1 @@
+{"version":3,"file":"signin.js","sources":["../../../HBuilderX/plugins/uniapp-cli-vite/uniPage:/cGFnZXMvc2lnbmluL3NpZ25pbi52dWU"],"sourcesContent":["import MiniProgramPage from 'D:/Projects/HBuilderX/SignInSystemMiniProgram/pages/signin/signin.vue'\nwx.createPage(MiniProgramPage)"],"names":[],"mappings":";;;;;;;AACA,GAAG,WAAW,eAAe;"}
