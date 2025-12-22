@@ -1,5 +1,8 @@
-// const BASE_URL = 'http://192.168.137.26:8000'
-const BASE_URL = 'http://192.168.137.26:8000'
+export const BASE_URL = 'http://localhost:8000'
+//export const BASE_URL = 'http://192.168.137.26:8000'
+// export const BASE_URL = 'http://111.228.57.192:8000'
+
+
 
 export const request = (options) => {
   return new Promise((resolve, reject) => {

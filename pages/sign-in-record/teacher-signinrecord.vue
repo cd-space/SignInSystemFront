@@ -1,44 +1,56 @@
 <template>
   <view class="record-page">
-    <view
-      class="record-item"
-      v-for="(record, index) in records"
-      :key="record.sign_task_id || record.id || index"
-      @click="viewDetail(record)"
-    >
-      <view class="record-header">
-        <view class="left">
-          <!-- 若已结束（status !== 1）显示开始/结束时间；进行中仅显示开始时间 -->
-          <view class="time-block">
-            <text class="time">开始：{{ record.created_time || record.time }}</text>
-            <text v-if="record.status !== 1" class="time end">结束：{{ record.update_time || record.endTime || '-' }}</text>
-          </view>
-          <text class="classes">{{ (record.class_name || record.classNames || []).join(', ') }}</text>
-        </view>
-        <view class="right">
-          <text class="status-tag" :class="record.status === 1 ? 'ongoing' : 'ended'">
-            {{ record.status === 1 ? '进行中' : '已结束' }}
-          </text>
-          <text class="summary">已签到 {{ record['1num'] ?? record.checkedCount ?? 0 }}/{{ record.total_num ?? record.totalCount ?? 0 }}</text>
-        </view>
+    <!-- 无记录提示 -->
+    <view v-if="records.length === 0" class="empty">
+      <view class="empty-card">
+        <view class="empty-icon">📭</view>
+        <view class="empty-title">暂无发布的签到</view>
+        <view class="empty-desc">还没有发起过签到，稍后再来查看</view>
       </view>
+    </view>
 
-      <view class="counts">
-        <view class="count-item not-signed">
-          <text class="num">{{ record['0num'] ?? 0 }}</text>
-          <text class="label">未签到</text>
+    <!-- 有记录 -->
+    <view v-else>
+      <view
+        class="record-item"
+        v-for="(record, index) in records"
+        :key="record.sign_task_id || record.id || index"
+        @click="viewDetail(record)"
+      >
+        <view class="record-header">
+          <view class="left">
+            <!-- 若已结束（status !== 1）显示开始/结束时间；进行中仅显示开始时间 -->
+            <view class="time-block">
+              <text class="time">开始：{{ record.created_time || record.time }}</text>
+              <text v-if="record.status !== 1" class="time end">结束：{{ record.update_time || record.endTime || '-' }}</text>
+            </view>
+            <text class="classes">{{ (record.class_name || record.classNames || []).join('，') }}</text>
+          </view>
+          <view class="right">
+            <text class="status-tag" :class="record.status === 1 ? 'ongoing' : 'ended'">
+              {{ record.status === 1 ? '进行中' : '已结束' }}
+            </text>
+            <text class="summary">已签到 {{ record['1num'] ?? record.checkedCount ?? 0 }}/{{ record.total_num ?? record.totalCount ?? 0 }}</text>
+          </view>
         </view>
-        <view class="count-item signed">
-          <text class="num">{{ record['1num'] ?? 0 }}</text>
-          <text class="label">已签到</text>
-        </view>
-        <view class="count-item leave">
-          <text class="num">{{ record['2num'] ?? 0 }}</text>
-          <text class="label">请假</text>
-        </view>
-        <view class="count-item late">
-          <text class="num">{{ record['3num'] ?? 0 }}</text>
-          <text class="label">迟到</text>
+
+        <view class="counts">
+          <view class="count-item not-signed">
+            <text class="num">{{ record['0num'] ?? 0 }}</text>
+            <text class="label">未签到</text>
+          </view>
+          <view class="count-item signed">
+            <text class="num">{{ record['1num'] ?? 0 }}</text>
+            <text class="label">已签到</text>
+          </view>
+          <view class="count-item leave">
+            <text class="num">{{ record['2num'] ?? 0 }}</text>
+            <text class="label">请假</text>
+          </view>
+          <view class="count-item late">
+            <text class="num">{{ record['3num'] ?? 0 }}</text>
+            <text class="label">迟到</text>
+          </view>
         </view>
       </view>
     </view>
@@ -77,6 +89,39 @@ onShow(async () => {
   padding: 30rpx;
   background: #f6f7f8;
   min-height: 100vh;
+}
+
+.empty {
+  min-height: 70vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-card {
+  background: #fff;
+  width: 84%;
+  padding: 40rpx;
+  border-radius: 18rpx;
+  text-align: center;
+  box-shadow: 0 12rpx 30rpx rgba(0,0,0,0.06);
+}
+
+.empty-icon {
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.empty-desc {
+  font-size: 24rpx;
+  color: #888;
 }
 
 .record-item {

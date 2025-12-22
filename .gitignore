@@ -1,3 +1,25 @@
+# HBuilderX / uni-app 打包输出（忽略 unpackage 下所有文件）
+unpackage/
+.unpackage/
+unpackge/      
+unpackge/**
+
+# 打包产物、发布文件
+www/
+dist/
+build/
+output/
+release/
+*.apk
+*.aab
+*.ipa
+
+# 临时 / 缓存
+.cache/
+.temp/
+.tmp/
+*.map
+
 # Node
 node_modules/
 npm-debug.log*
@@ -5,51 +27,38 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Build / output
-dist/
-build/
-www/
-.unpackage/
-unpackage/
-output/
-release/
-*.apk
-*.aab
-*.ipa
-
-# Environment
+# 环境变量
 .env
 .env.*.local
 .env.local
 .env.production.local
 
-# IDE / editor
+# IDE / 编辑器
 .vscode/
 .idea/
 *.iml
 .hbuilderx/
 .history/
 
-# System files
+# 系统文件
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Logs
+# 日志
 logs/
 *.log
 
-# Coverage & test output
+# 覆盖率 & 测试
 coverage/
 .nyc_output/
 jest-*.json
 
-# Cache / temp
-.cache/
-.temp/
-.tmp/
+# 数据库 / 本地文件
+*.db
+*.sqlite
 
-# Misc
+# 其他
 *.bak
 *.swp
 *.swo
