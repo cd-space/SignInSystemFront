@@ -85,6 +85,10 @@ const taskStatusClass = (s) => {
 
 onShow(async () => {
     try {
+        if (!cacheUser || !cacheUser.id) {
+            // 无用户 id，直接返回空数组
+            return []
+        }
         const res = await quaryStudentHistoryApi({ student_id: cacheUser.id })
         if (res && res.code === 200) {
             records.value = Array.isArray(res.data) ? res.data : (res.data ? res.data : [])

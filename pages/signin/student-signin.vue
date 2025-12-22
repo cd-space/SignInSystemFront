@@ -82,6 +82,10 @@ const statusClass = (status) => {
 
 /** 请求并返回数组（保证返回 []） */
 const fetchMySign = async () => {
+    if (!cacheUser || !cacheUser.id) {
+        // 无用户 id，直接返回空数组
+        return []
+    }
     const res = await quaryStudentSignApi({ student_id: cacheUser.id })
     if (res && res.code === 200) {
         return Array.isArray(res.data) ? res.data : (res.data ? res.data : [])
