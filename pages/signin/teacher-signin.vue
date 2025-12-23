@@ -60,6 +60,7 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 // import { uniChooseImage } from '@dcloudio/uni-app'
 import { seacherclassApi, publishSignIgApi, queryTeacherSignApi, querySignTaskStudentsApi, closeSignTaskApi,updateSignStatusApi } from '@/api/teacher.js'
+import { BASE_URL } from '../../utils/request'
 
 const cacheUser = uni.getStorageSync('userinfo')
 
@@ -91,12 +92,74 @@ const toggleClass = (id) => {
 
 /* 上传图片 */
 const chooseImage = async () => {
-  const res = await uni.chooseImage({
-    count: 9 - images.value.length,
-    sizeType: ['original', 'compressed'],
-    sourceType: ['album', 'camera']
-  })
-  images.value.push(...res.tempFilePaths)
+  try {
+    const res = await uni.chooseImage({
+      count: 3,
+      sizeType: ['compressed'], // 使用压缩图减少上传体积
+      sourceType: ['album', 'camera']
+    })
+    if (!res || !res.tempFilePaths || res.tempFilePaths.length === 0) return
+
+    // 将选中的图片加入展示列表
+    images.value.push(...res.tempFilePaths)
+
+    // 逐张上传到识别接口进行识别并签到
+    uni.showLoading({ title: '识别中...' })
+    for (const filePath of res.tempFilePaths) {
+      try {
+        const uploadRes = await new Promise((resolve, reject) => {
+          uni.uploadFile({
+            url: BASE_URL + '/api/sign_task/recognize',
+            filePath,
+            name: 'photo',
+            formData: {
+              sign_task_id: taskId.value,
+              threshold: String(0.9)
+            },
+            success: (r) => resolve(r),
+            fail: (e) => reject(e)
+          })
+        })
+
+        // 解析返回
+        let data = uploadRes
+        if (uploadRes && uploadRes.data) {
+          try { data = JSON.parse(uploadRes.data) } catch (e) { data = uploadRes }
+        }
+
+        if (data && data.code === 200) {
+          // 遍历详情，更新学生签到状态
+          const details = Array.isArray(data.details) ? data.details : []
+          let matchedCount = 0
+          for (const d of details) {
+            if (d && d.student_id) {
+              matchedCount++
+              const idx = students.value.findIndex(s => String(s.id) === String(d.student_id) || String(s.user_id) === String(d.student_id))
+              if (idx !== -1) {
+                students.value[idx].statusIndex = 1 // 标记已签到
+              }
+            }
+          }
+          if (matchedCount > 0) {
+            uni.showToast({ title: `识别成功，已签到 ${matchedCount} 人`, icon: 'success' })
+          } else {
+            uni.showToast({ title: '未识别到可签到学生', icon: 'none' })
+          }
+        } else {
+          uni.showToast({ title: data?.message || '识别失败', icon: 'none' })
+        }
+      } catch (err) {
+        console.error('recognize upload fail', err)
+        uni.showToast({ title: '上传识别失败', icon: 'none' })
+      }
+    }
+    sortStudents()
+  } catch (err) {
+    console.error('chooseImage fail', err)
+    uni.showToast({ title: '选择图片失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
 }
 
 /* 删除图片 */
